@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+
+        .smooth-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .weather-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .weather-icon {
+            font-size: 80px;
+            margin: 20px 0;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .temp-display {
+            font-size: 60px;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 15px 20px;
+            color: white;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .search-box::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-search:active {
+            transform: translateY(0);
+        }
+
+        .forecast-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .forecast-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .weather-detail {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .weather-detail:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .detail-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid rgba(34, 197, 94, 0.5);
+            color: #86efac;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 30px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .grid-responsive {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .temp-display {
+                font-size: 48px;
+            }
+
+            .weather-icon {
+                font-size: 60px;
+            }
+
+            .weather-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-10 fade-in">
+            <h1 class="text-5xl font-bold text-white mb-3">🌤️ Weather Dashboard</h1>
+            <p class="text-xl text-white/80">Real-time weather data and forecasts</p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="glass-effect p-8 mb-8 fade-in" style="animation-delay: 0.1s;">
+            <div class="flex flex-col md:flex-row gap-4">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-box flex-1" 
+                    placeholder="Search for a city (e.g., New York, London, Tokyo)..."
+                    autocomplete="off"
+                >
+                <button class="btn-search md:w-auto w-full" onclick="searchWeather()">
+                    🔍 Search
+                </button>
+                <button class="btn-search md:w-auto w-full" onclick="getCurrentLocation()">
+                    📍 My Location
+                </button>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+        </div>
+
+        <!-- Current Weather Section -->
+        <div class="grid-responsive mb-8 fade-in" style="animation-delay: 0.2s;">
+            <!-- Main Weather Card -->
+            <div class="weather-card md:col-span-2">
+                <div id="loadingSpinner" class="text-center">
+                    <div class="loading mx-auto mb-4"></div>\n                    <p class="text-white">Loading weather data...</p>\n                </div>
+                <div id="weatherContent" class="hidden">
+                    <div class="text-sm opacity-75 mb-4" id="location"></div>
+                    <div class="weather-icon" id="weatherIcon">🌤️</div>
+                    <div class="temp-display" id="temperature">--°C</div>
+                    <div class="text-2xl mb-2" id="weatherDescription">Loading...</div>
+                    <div class="text-sm opacity-75 mb-6" id="feelsLike">Feels like --°C</div>
+                    
+                    <div id="weatherDetails">
+                        <div class="weather-detail">
+                            <span class="detail-label">💧 Humidity</span>
+                            <span class="detail-value" id="humidity">--%</span>
+                        </div>
+                        <div class="weather-detail">
+                            <span class="detail-label">💨 Wind Speed</span>\n                            <span class="detail-value" id="windSpeed">-- m/s</span>\n                        </div>\n                        <div class="weather-detail\">\n                            <span class=\"detail-label\">🌡️ Feels Like</span>\n                            <span class=\"detail-value\" id=\"feelsLike2\">--°C</span>\n                        </div>\n                        <div class=\"weather-detail\">\n                            <span class=\"detail-label\">🔽 Pressure</span>\n                            <span class=\"detail-value\" id=\"pressure\">-- hPa</span>\n                        </div>\n                        <div class=\"weather-detail\">\n                            <span class=\"detail-label\">👁️ Visibility</span>\n                            <span class=\"detail-value\" id=\"visibility\">-- km</span>\n                        </div>\n                        <div class=\"weather-detail\">\n                            <span class=\"detail-label\">🌅 UV Index</span>\n                            <span class=\"detail-value\" id=\"uvIndex\">--</span>\n                        </div>\n                    </div>\n                </div>\n            </div>\n\n            <!-- Additional Info -->\n            <div class=\"weather-card\">\n                <h3 class=\"text-xl font-600 mb-6\">📊 Additional Info</h3>\n                <div id=\"additionalInfo\" class=\"hidden\">\n                    <div class=\"weather-detail\">\n                        <span class=\"detail-label\">🌅 Sunrise</span>\n                        <span class=\"detail-value\" id=\"sunrise\">--:--</span>\n                    </div>\n                    <div class=\"weather-detail\">\n                        <span class=\"detail-label\">🌇 Sunset</span>\n                        <span class=\"detail-value\" id=\"sunset\">--:--</span>\n                    </div>\n                    <div class=\"weather-detail\">\n                        <span class=\"detail-label\">📈 Max Temp</span>\n                        <span class=\"detail-value\" id=\"maxTemp\">--°C</span>\n                    </div>\n                    <div class=\"weather-detail\">\n                        <span class=\"detail-label\">📉 Min Temp</span>\n                        <span class=\"detail-value\" id=\"minTemp\">--°C</span>\n                    </div>\n                    <div class=\"weather-detail\">\n                        <span class=\"detail-label\">💧 Rain Chance</span>\n                        <span class=\"detail-value\" id=\"rainChance\">--%</span>\n                    </div>\n                    <div class=\"weather-detail\">\n                        <span class=\"detail-label\">⛅ Cloud Coverage</span>\n                        <span class=\"detail-value\" id=\"cloudCoverage\">--%</span>\n                    </div>\n                </div>\n            </div>\n        </div>\n\n        <!-- 5-Day Forecast Section -->\n        <div class=\"glass-effect p-8 mb-8 fade-in\" style=\"animation-delay: 0.3s;\">\n            <h2 class=\"text-3xl font-bold text-white mb-6\">📅 5-Day Forecast</h2>\n            <div id=\"forecastContainer\" class=\"grid-responsive\">\n                <!-- Forecast cards will be inserted here -->\n            </div>\n        </div>\n\n        <!-- Temperature Chart -->\n        <div class=\"glass-effect p-8 mb-8 fade-in\" style=\"animation-delay: 0.4s;\">\n            <h2 class=\"text-3xl font-bold text-white mb-6\">📈 Temperature Trend</h2>\n            <div class=\"chart-container\">\n                <canvas id=\"tempChart\"></canvas>\n            </div>\n        </div>\n\n        <!-- Footer -->\n        <div class=\"text-center text-white/60 py-8\">\n            <p>Weather data provided by <strong>Open-Meteo API</strong> (Free, No API Key Required)</p>\n            <p class=\"text-sm mt-2\">Last updated: <span id=\"lastUpdated\">--:--</span></p>\n        </div>\n    </div>\n\n    <script>\n        // API Configuration\n        const API_BASE = 'https://api.open-meteo.com/v1';\n        let chartInstance = null;\n\n        // Weather emoji mapping\n        const weatherEmojis = {\n            0: '☀️',\n            1: '🌤️',\n            2: '⛅',\n            3: '☁️',\n            45: '🌫️',\n            48: '🌫️',\n            51: '🌦️',\n            53: '🌦️',\n            55: '🌧️',\n            61: '🌧️',\n            63: '🌧️',\n            65: '⛈️',\n            71: '❄️',\n            73: '❄️',\n            75: '❄️',\n            77: '❄️',\n            80: '🌧️',\n            81: '⛈️',\n            82: '⛈️',\n            85: '❄️',\n            86: '❄️',\n            95: '🌪️',\n            96: '🌪️',\n            99: '🌪️'\n        };\n\n        // Show error message\n        function showError(message) {\n            const errorDiv = document.getElementById('errorMessage');\n            errorDiv.textContent = `❌ ${message}`;\n            errorDiv.style.display = 'block';\n            setTimeout(() => {\n                errorDiv.style.display = 'none';\n            }, 5000);\n        }\n\n        // Show success message\n        function showSuccess(message) {\n            const successDiv = document.getElementById('successMessage');\n            successDiv.textContent = `✅ ${message}`;\n            successDiv.style.display = 'block';\n            setTimeout(() => {\n                successDiv.style.display = 'none';\n            }, 3000);\n        }\n\n        // Format time\n        function formatTime(timeString) {\n            if (!timeString) return '--:--';\n            const [hours, minutes] = timeString.split(':');\n            return `${hours}:${minutes}`;\n        }\n\n        // Get weather description\n        function getWeatherDescription(weatherCode) {\n            const descriptions = {\n                0: 'Clear Sky',\n                1: 'Mostly Clear',\n                2: 'Partly Cloudy',\n                3: 'Overcast',\n                45: 'Foggy',\n                48: 'Foggy with Rime',\n                51: 'Light Drizzle',\n                53: 'Moderate Drizzle',\n                55: 'Heavy Drizzle',\n                61: 'Slight Rain',\n                63: 'Moderate Rain',\n                65: 'Heavy Rain',\n                71: 'Slight Snow',\n                73: 'Moderate Snow',\n                75: 'Heavy Snow',\n                77: 'Snow Grains',\n                80: 'Slight Rain Showers',\n                81: 'Moderate Showers',\n                82: 'Heavy Showers',\n                85: 'Slight Snow Showers',\n                86: 'Heavy Snow Showers',\n                95: 'Thunderstorm',\n                96: 'Thunderstorm with Hail',\n                99: 'Thunderstorm with Heavy Hail'\n            };\n            return descriptions[weatherCode] || 'Unknown';\n        }\n\n        // Fetch weather data\n        async function fetchWeatherData(latitude, longitude, cityName = '') {\n            try {\n                document.getElementById('loadingSpinner').classList.remove('hidden');\n                document.getElementById('weatherContent').classList.add('hidden');\n                document.getElementById('additionalInfo').classList.add('hidden');\n\n                const response = await fetch(\n                    `${API_BASE}/forecast?` +\n                    `latitude=${latitude}&` +\n                    `longitude=${longitude}&` +\n                    `current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,pressure_msl,visibility,cloud_cover,uv_index&` +\n                    `daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&` +\n                    `temperature_unit=celsius&` +\n                    `wind_speed_unit=kmh&` +\n                    `timezone=auto`\n                );\n\n                if (!response.ok) throw new Error('Failed to fetch weather data');\n\n                const data = await response.json();\n                updateWeatherDisplay(data, cityName || `${data.latitude.toFixed(2)}, ${data.longitude.toFixed(2)}`);\n                showSuccess('Weather data loaded successfully!');\n\n            } catch (error) {\n                console.error('Error:', error);\n                showError('Unable to fetch weather data. Please try again.');\n            } finally {\n                document.getElementById('loadingSpinner').classList.add('hidden');\n            }\n        }\n\n        // Update weather display\n        function updateWeatherDisplay(data, cityName) {\n            const current = data.current;\n            const daily = data.daily;\n\n            // Update location\n            document.getElementById('location').textContent = `📍 ${cityName}`;\n\n            // Update current weather\n            const weatherCode = current.weather_code;\n            document.getElementById('weatherIcon').textContent = weatherEmojis[weatherCode] || '🌤️';\n            document.getElementById('temperature').textContent = `${Math.round(current.temperature_2m)}°C`;\n            document.getElementById('weatherDescription').textContent = getWeatherDescription(weatherCode);\n            document.getElementById('feelsLike').textContent = `Feels like ${Math.round(current.apparent_temperature)}°C`;\n            document.getElementById('humidity').textContent = `${current.relative_humidity_2m}%`;\n            document.getElementById('windSpeed').textContent = `${current.wind_speed_10m} km/h`;\n            document.getElementById('feelsLike2').textContent = `${Math.round(current.apparent_temperature)}°C`;\n            document.getElementById('pressure').textContent = `${current.pressure_msl} hPa`;\n            document.getElementById('visibility').textContent = `${(current.visibility / 1000).toFixed(1)} km`;\n            document.getElementById('uvIndex').textContent = current.uv_index.toFixed(1);\n\n            // Update additional info\n            document.getElementById('sunrise').textContent = formatTime(daily.sunrise[0]);\n            document.getElementById('sunset').textContent = formatTime(daily.sunset[0]);\n            document.getElementById('maxTemp').textContent = `${Math.round(daily.temperature_2m_max[0])}°C`;\n            document.getElementById('minTemp').textContent = `${Math.round(daily.temperature_2m_min[0])}°C`;\n            document.getElementById('rainChance').textContent = `${daily.precipitation_probability_max[0]}%`;\n            document.getElementById('cloudCoverage').textContent = `${current.cloud_cover}%`;\n\n            // Update timestamp\n            const now = new Date();\n            document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();\n\n            // Show content\n            document.getElementById('weatherContent').classList.remove('hidden');\n            document.getElementById('additionalInfo').classList.remove('hidden');\n\n            // Update forecast\n            updateForecast(daily);\n\n            // Update chart\n            updateTemperatureChart(daily);\n        }\n\n        // Update 5-day forecast\n        function updateForecast(daily) {\n            const forecastContainer = document.getElementById('forecastContainer');\n            forecastContainer.innerHTML = '';\n\n            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];\n\n            for (let i = 1; i < 6; i++) {\n                const date = new Date(daily.time[i]);\n                const dayName = days[date.getDay()];\n                const weatherCode = daily.weather_code[i];\n                const emoji = weatherEmojis[weatherCode] || '🌤️';\n                const maxTemp = Math.round(daily.temperature_2m_max[i]);\n                const minTemp = Math.round(daily.temperature_2m_min[i]);\n                const rainChance = daily.precipitation_probability_max[i];\n\n                const card = document.createElement('div');\n                card.className = 'forecast-card fade-in';\n                card.style.animationDelay = `${i * 0.1}s`;\n                card.innerHTML = `\n                    <div class=\"text-lg font-600 mb-2\">${dayName}</div>\n                    <div class=\"text-4xl mb-4\">${emoji}</div>\n                    <div class=\"text-2xl font-700 mb-2\">${maxTemp}°</div>\n                    <div class=\"text-sm opacity-75 mb-3\">${minTemp}°</div>\n                    <div class=\"text-sm\">💧 ${rainChance}%</div>\n                `;\n                forecastContainer.appendChild(card);\n            }\n        }\n\n        // Update temperature chart\n        function updateTemperatureChart(daily) {\n            const ctx = document.getElementById('tempChart').getContext('2d');\n            const labels = daily.time.slice(0, 6).map(date => {\n                return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });\n            });\n            const maxTemps = daily.temperature_2m_max.slice(0, 6);\n            const minTemps = daily.temperature_2m_min.slice(0, 6);\n\n            if (chartInstance) {\n                chartInstance.destroy();\n            }\n\n            chartInstance = new Chart(ctx, {\n                type: 'line',\n                data: {\n                    labels: labels,\n                    datasets: [\n                        {\n                            label: 'Max Temperature (°C)',\n                            data: maxTemps,\n                            borderColor: '#FF6B6B',\n                            backgroundColor: 'rgba(255, 107, 107, 0.1)',\n                            tension: 0.4,\n                            fill: true,\n                            borderWidth: 3,\n                            pointRadius: 6,\n                            pointBackgroundColor: '#FF6B6B',\n                            pointBorderColor: '#fff',\n                            pointBorderWidth: 2\n                        },\n                        {\n                            label: 'Min Temperature (°C)',\n                            data: minTemps,\n                            borderColor: '#4ECDC4',\n                            backgroundColor: 'rgba(78, 205, 196, 0.1)',\n                            tension: 0.4,\n                            fill: true,\n                            borderWidth: 3,\n                            pointRadius: 6,\n                            pointBackgroundColor: '#4ECDC4',\n                            pointBorderColor: '#fff',\n                            pointBorderWidth: 2\n                        }\n                    ]\n                },\n                options: {\n                    responsive: true,\n                    maintainAspectRatio: false,\n                    plugins: {\n                        legend: {\n                            labels: {\n                                color: '#fff',\n                                font: { size: 14, family: \"'Poppins', sans-serif\" }\n                            }\n                        }\n                    },\n                    scales: {\n                        y: {\n                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },\n                            grid: { color: 'rgba(255, 255, 255, 0.1)' }\n                        },\n                        x: {\n                            ticks: { color: 'rgba(255, 255, 255, 0.7)' },\n                            grid: { color: 'rgba(255, 255, 255, 0.1)' }\n                        }\n                    }\n                }\n            });\n        }\n\n        // Search weather by city\n        async function searchWeather() {\n            const searchInput = document.getElementById('searchInput').value.trim();\n            if (!searchInput) {\n                showError('Please enter a city name');\n                return;\n            }\n\n            try {\n                // Geocode city name to coordinates\n                const geoResponse = await fetch(\n                    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchInput)}&count=1&language=en&format=json`\n                );\n\n                if (!geoResponse.ok) throw new Error('City not found');\n\n                const geoData = await geoResponse.json();\n                if (!geoData.results || geoData.results.length === 0) {\n                    showError('City not found. Please try another search.');\n                    return;\n                }\n\n                const result = geoData.results[0];\n                const cityName = `${result.name}${result.admin1 ? ', ' + result.admin1 : ''}${result.country ? ', ' + result.country : ''}`;\n                fetchWeatherData(result.latitude, result.longitude, cityName);\n\n            } catch (error) {\n                console.error('Error:', error);\n                showError('Unable to find city. Please check spelling and try again.');\n            }\n        }\n\n        // Get current location\n        function getCurrentLocation() {\n            if (!navigator.geolocation) {\n                showError('Geolocation is not supported by your browser');\n                return;\n            }\n\n            document.getElementById('loadingSpinner').classList.remove('hidden');\n            document.getElementById('weatherContent').classList.add('hidden');\n\n            navigator.geolocation.getCurrentPosition(\n                (position) => {\n                    const { latitude, longitude } = position.coords;\n                    fetchWeatherData(latitude, longitude, 'Your Location');\n                },\n                (error) => {\n                    showError('Unable to access location. Please enable location services.');\n                    document.getElementById('loadingSpinner').classList.add('hidden');\n                    console.error('Geolocation error:', error);\n                }\n            );\n        }\n\n        // Allow Enter key to search\n        document.getElementById('searchInput').addEventListener('keypress', (e) => {\n            if (e.key === 'Enter') searchWeather();\n        });\n\n        // Load default location on page load\n        window.addEventListener('load', () => {\n            // Default to New York\n            fetchWeatherData(40.7128, -74.0060, 'New York, United States');\n        });\n    </script>\n</body>\n</html>
